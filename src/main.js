@@ -86,3 +86,4 @@ window.onload = () => {
   /* === Close (X) on modal === */
   closeBtn.onclick = hideLoginModal;
 };
+
