@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<!-- 🧠 This line tells the browser we're using HTML5 -->
+<html lang="en">
+  <!-- 🧠 The <head> section is invisible to users, it holds metadata and links -->
+  <head>
+    <meta charset="UTF-8" />
+    <!-- 🧠 Character encoding: UTF-8 supports almost all text characters -->
+
+    <title>Firebase Auth with Vite</title>
+    <!-- 🧠 The text that appears in the browser tab -->
+
+    <!-- 🎨 Linking our external stylesheet (for colors, layout, etc) -->
+    <link rel="stylesheet" href="/src/styles/style.css" />
+  </head>
+
+  <!-- 👀 Everything inside <body> shows up on the actual webpage -->
+  <body>
+    <!-- 🧭 TOP NAVIGATION BAR -->
+    <nav class="navbar">
+      <!-- 🟦 Logo area (could also be an <img> tag instead of just text) -->
+      <div class="logo">ConLearn</div>
+
+      <!-- 🔗 Navigation links across the top bar -->
+      <ul class="nav-links">
+        <li><a href="#">Home</a></li>
+        <li><a href="#">Features</a></li>
+        <li><a href="#">About</a></li>
+        <li><a href="#">Login</a></li>
+      </ul>
+    </nav>
+
+    <!-- 👋 Main Page Heading -->
+    <h1>Firebase Auth Demo</h1>
+
+    <!-- 📩 Email input box -->
+    <input type="email" id="email" placeholder="Email" />
+
+    <!-- 🔑 Password input box -->
+    <input type="password" id="password" placeholder="Password" />
+    <br /><br />
+    <!-- 🧠 <br> adds line breaks; here we space it out a little -->
+
+    <!-- 🖱️ Action buttons to trigger Firebase auth -->
+    <button id="signup">Sign Up</button>
+    <button id="login">Log In</button>
+    <button id="logout">Logout</button>
+
+    <!-- 💬 Shows whether you're signed in or not -->
+    <p id="status">Not logged in</p>
+
+    <!-- ⚙️ Connects your JavaScript logic to this page -->
+    <script type="module" src="/src/main.js"></script>
+    <!-- 🧠 "type='module'" allows the use of ES6 `import/export` features -->
+      <!-- 🔒 LOGIN REQUIRED MODAL -->
+  <div id="login-modal" class="modal hidden">
+    <div class="modal-content">
+      <span id="close-modal" class="close-button">✖</span>
+      <p>Please log in to continue</p>
+    </div>
+  </div>
+
+  <!-- ⚙️ Connects your JavaScript logic to this page -->
+  <script type="module" src="/src/main.js"></script>
+  <!-- 🧠 "type='module'" allows the use of ES6 `import/export` features -->
+
+</body>
+</html>
