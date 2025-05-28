@@ -13,26 +13,40 @@
   z-index: 999;
 }
 
-/* 🔲 The white popup box itself */
+/* 🔲 The popup box */
 .modal-content {
-  background-color: white;
+  background-color: #f8d6d6; /* ✅ light gray instead of white */
   color: black;
-  padding: 2rem;
+  padding: 1rem;
   border-radius: 8px;
   width: 300px;
   text-align: center;
   position: relative;
-  font-family: sans-serif;
+  font-family: cursive;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.25); /* Optional drop shadow */
 }
 
-/* 🔲 The red ❌ close button */
+/* 🔲 The red ❌ close button with square around it */
 .close-button {
   position: absolute;
   top: 8px;
   right: 12px;
-  font-size: 20px;
+  width: 25px;
+  height: 25px;
+  line-height: 25px;
+  text-align: center;
+  background-color: rgb(202, 202, 202);
+  border: 1px solid #000000;
+  border-radius: 4px;
   color: red;
+  font-size: 18px;
+  font-weight: bold;
   cursor: pointer;
+  transition: background-color 0.2s ease;
+}
+
+.close-button:hover {
+  background-color: #eee;
 }
 
 /* 🔲 This class hides the modal */
