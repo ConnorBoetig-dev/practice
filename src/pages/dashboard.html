@@ -1,0 +1,22 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Dashboard</title>
+  <link rel="stylesheet" href="../styles/style.css">
+</head>
+<body>
+  <nav>
+    <a href="/index.html">Logout</a>
+    <a href="/src/pages/dashboard.html">Dashboard</a>
+  </nav>
+
+  <h1>Welcome to your Dashboard</h1>
+  <p>You’re successfully logged in!</p>
+
+  <script type="module">
+    import { protectPage } from "../auth/guard.js";
+    protectPage();
+  </script>
+</body>
+</html>

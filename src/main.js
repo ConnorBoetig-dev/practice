@@ -1,5 +1,4 @@
 // src/main.js
-
 // ✅ 1. Import global styles
 import "./styles/style.css";
 
@@ -14,72 +13,54 @@ let currentUser = null;
 
 // ✅ 5. Run after page fully loads
 window.onload = () => {
-  // 🎯 Get all the DOM elements
-  const emailInput = document.getElementById("email");
+  /* 🎯 Grab needed DOM elements */
+  const emailInput   = document.getElementById("email");
   const passwordInput = document.getElementById("password");
-  const signupBtn = document.getElementById("signup");
-  const loginBtn = document.getElementById("login");
-  const logoutBtn = document.getElementById("logout");
-  const statusText = document.getElementById("status");
-  const closeBtn = document.getElementById("close-modal");
-  const homeLink = document.querySelector("a[href='#']");
+  const signupBtn    = document.getElementById("signup");
+  const loginBtn     = document.getElementById("login");
+  const logoutBtn    = document.getElementById("logout");
+  const statusText   = document.getElementById("status");
+  const closeBtn     = document.getElementById("close-modal");
+  const homeLink     = document.getElementById("home-link"); // ← NEW (uses the id)
 
-  // ✅ Show modal
-  function showLoginModal() {
-    const modal = document.getElementById("login-modal");
-    modal.classList.remove("hidden");
-  }
+  /* === Modal helpers === */
+  const showLoginModal = () =>
+    document.getElementById("login-modal").classList.remove("hidden");
 
-  // ❌ Hide modal
-  function hideLoginModal() {
-    const modal = document.getElementById("login-modal");
-    modal.classList.add("hidden");
-  }
+  const hideLoginModal = () =>
+    document.getElementById("login-modal").classList.add("hidden");
 
-  // 🖱️ Sign Up button
+  /* === Sign-up === */
   signupBtn.onclick = () => {
-    const email = emailInput.value;
+    const email    = emailInput.value;
     const password = passwordInput.value;
 
     signUp(email, password)
-      .then((userCredential) => {
-        const user = userCredential.user;
-        statusText.textContent = `Signed up: ${user.email}`;
-      })
-      .catch((error) => {
-        alert("Signup Error: " + error.message);
-      });
+      .then(({ user }) => (statusText.textContent = `Signed up: ${user.email}`))
+      .catch((err) => alert("Signup Error: " + err.message));
   };
 
-  // 🖱️ Login button
+  /* === Login === */
   loginBtn.onclick = () => {
-    const email = emailInput.value;
+    const email    = emailInput.value;
     const password = passwordInput.value;
 
     login(email, password)
-      .then((userCredential) => {
-        const user = userCredential.user;
-        statusText.textContent = `Logged in: ${user.email}`;
-      })
-      .catch((error) => {
-        alert("Login Error: " + error.message);
-      });
+      .then(({ user }) => (statusText.textContent = `Logged in: ${user.email}`))
+      .catch((err) => alert("Login Error: " + err.message));
   };
 
-  // 🚪 Logout button
+  /* === Logout === */
   logoutBtn.onclick = () => {
     logout()
-      .then(() => {
-        statusText.textContent = "Logged out";
-      })
-      .catch((error) => {
-        alert("Logout Error: " + error.message);
-      });
+      .then(() => (statusText.textContent = "Logged out"))
+      .catch((err) => alert("Logout Error: " + err.message));
   };
 
-  // 🔁 Auth state listener
+  /* === Track auth state === */
   onAuthChange((user) => {
-    currentUser = user; // 💾 update tracker
+    currentUser = user;
+
     if (user) {
       statusText.textContent = `Logged in: ${user.email}`;
       logoutBtn.style.display = "inline-block";
@@ -89,16 +70,19 @@ window.onload = () => {
     }
   });
 
-  // 🟥 Intercept "Home" click if not logged in
+  /* === Intercept Home link === */
   homeLink.addEventListener("click", (e) => {
-    e.preventDefault(); // ⛔ Stop page jump
+    e.preventDefault(); // stop default jump
+
     if (!currentUser) {
+      /* 🚫 Not logged in → show modal */
       showLoginModal();
     } else {
-      alert("You are already logged in!");
+      /* ✅ Logged in → go to dashboard */
+      window.location.href = "/src/pages/dashboard.html";
     }
   });
 
-  // ❌ Handle close "X" on modal
+  /* === Close (X) on modal === */
   closeBtn.onclick = hideLoginModal;
 };
