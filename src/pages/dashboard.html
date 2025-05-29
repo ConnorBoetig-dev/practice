@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ConLearn Dashboard</title>
+  
+  <!-- 🎨 CSS Files -->
+  <link rel="stylesheet" href="../css/style.css">
+  <link rel="stylesheet" href="../css/dashboard.css">
+</head>
+<body>
+  <!-- 🧭 Navigation Bar -->
+  <nav class="navbar">
+    <div class="logo">ConLearn Dashboard</div>
+    <ul class="nav-links">
+      <li><a href="../../index.html">Home</a></li>
+      <li><a href="#" id="profile-link">Profile</a></li>
+      <li><a href="#" id="logout-link">Logout</a></li>
+    </ul>
+  </nav>
+
+  <!-- 📊 Dashboard Container -->
+  <div class="dashboard-container">
+    <!-- Welcome Section -->
+    <div class="welcome-section">
+      <h1>Welcome to Your Dashboard! 🎯</h1>
+      <p id="user-email" class="user-info">Loading...</p>
+    </div>
+
+    <!-- 📤 Upload Section -->
+    <div class="upload-card">
+      <h2>📸 Upload Media Files</h2>
+      <p>Upload images or videos to your personal cloud storage</p>
+      
+      <!-- File Input -->
+      <div class="file-input-wrapper">
+        <input 
+          type="file" 
+          id="file-input" 
+          accept="image/*,video/*"
+          class="file-input"
+        >
+        <label for="file-input" class="file-input-label">
+          Choose File
+        </label>
+        <span id="file-name" class="file-name">No file selected</span>
+      </div>
+      
+      <!-- Upload Button -->
+      <button id="upload-btn" class="upload-btn" disabled>
+        Upload to Cloud
+      </button>
+      
+      <!-- Progress Bar -->
+      <div id="progress-wrapper" class="progress-wrapper" style="display: none;">
+        <div class="progress-bar">
+          <div id="progress-fill" class="progress-fill"></div>
+        </div>
+        <span id="progress-text" class="progress-text">0%</span>
+      </div>
+      
+      <!-- Status Messages -->
+      <div id="status-message" class="status-message"></div>
+    </div>
+
+    <!-- 🖼️ Your Files Section -->
+    <div class="files-section">
+      <h2>📁 Your Uploaded Files</h2>
+      <div id="files-grid" class="files-grid">
+        <p class="loading-text">Loading your files...</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- 🔥 Firebase Scripts -->
+  <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-storage-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
+  
+  <!-- 📦 Our Scripts -->
+  <script src="../js/auth.js"></script>
+  <script src="../js/dashboard.js"></script>
+</body>
+</html>

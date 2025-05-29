@@ -1,17 +1,16 @@
 {
   "name": "conlearn",
-  "private": true,
-  "version": "0.0.0",
-  "type": "module",
+  "version": "1.0.0",
+  "description": "ConLearn - AI-powered learning platform",
+  "main": "index.html",
   "scripts": {
-    "dev": "vite",
-    "build": "vite build",
-    "preview": "vite preview"
+    "start": "python -m http.server 8000",
+    "serve": "npx serve ."
   },
+  "keywords": ["learning", "ai", "firebase"],
+  "author": "Your Name",
+  "license": "MIT",
   "devDependencies": {
-    "vite": "^6.3.5"
-  },
-  "dependencies": {
-    "firebase": "^11.8.1"
+    "serve": "^14.2.0"
   }
 }

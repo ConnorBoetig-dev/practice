@@ -1,67 +1,79 @@
 <!DOCTYPE html>
-<!-- 🧠 This line tells the browser we're using HTML5 -->
 <html lang="en">
-  <!-- 🧠 The <head> section is invisible to users, it holds metadata and links -->
-  <head>
-    <meta charset="UTF-8" />
-    <!-- 🧠 Character encoding: UTF-8 supports almost all text characters -->
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ConLearn - Learn with AI</title>
+  
+  <!-- 🎨 Link to our CSS files -->
+  <link rel="stylesheet" href="src/css/style.css">
+  <link rel="stylesheet" href="src/css/modal.css">
+</head>
+<body>
+  <!-- 🧭 Navigation Bar -->
+  <nav class="navbar">
+    <div class="logo">ConLearn</div>
+    <ul class="nav-links">
+      <li><a id="home-link" href="#">Home</a></li>
+      <li><a id="dashboard-link" href="#">Dashboard</a></li>
+      <li><a href="#">About</a></li>
+    </ul>
+  </nav>
 
-    <title>Firebase Auth with Vite</title>
-    <!-- 🧠 The text that appears in the browser tab -->
-
-    <!-- 🎨 Linking our external stylesheet (for colors, layout, etc) -->
-    <link rel="stylesheet" href="/src/styles/style.css" />
-  </head>
-
-  <!-- 👀 Everything inside <body> shows up on the actual webpage -->
-  <body>
-    <!-- 🧭 TOP NAVIGATION BAR -->
-    <nav class="navbar">
-  <div class="logo">ConLearn</div>
-
-  <ul class="nav-links">
-    <!-- ① give Home a real ID and keep # so JS can intercept -->
-    <li><a id="home-link" href="#">Home</a></li>
-    <li><a href="#">Features</a></li>
-    <li><a href="#">About</a></li>
-    <li><a href="#">Login</a></li>
-  </ul>
-</nav>
-
-
-    <!-- 👋 Main Page Heading -->
-    <h1>Firebase Auth Demo</h1>
-
-    <!-- 📩 Email input box -->
-    <input type="email" id="email" placeholder="Email" />
-
-    <!-- 🔑 Password input box -->
-    <input type="password" id="password" placeholder="Password" />
-    <br /><br />
-    <!-- 🧠 <br> adds line breaks; here we space it out a little -->
-
-    <!-- 🖱️ Action buttons to trigger Firebase auth -->
-    <button id="signup">Sign Up</button>
-    <button id="login">Log In</button>
-    <button id="logout">Logout</button>
-
-    <!-- 💬 Shows whether you're signed in or not -->
-    <p id="status">Not logged in</p>
-
-    <!-- ⚙️ Connects your JavaScript logic to this page -->
-    <script type="module" src="/src/main.js"></script>
-    <!-- 🧠 "type='module'" allows the use of ES6 `import/export` features -->
-      <!-- 🔒 LOGIN REQUIRED MODAL -->
-  <div id="login-modal" class="modal hidden">
-    <div class="modal-content">
-      <span id="close-modal" class="close-button">✖</span>
-      <p>Please log in to continue</p>
+  <!-- 🏠 Main Content -->
+  <div class="container">
+    <h1>Welcome to ConLearn! 🚀</h1>
+    <p>Your AI-powered learning companion</p>
+    
+    <!-- 🔐 Login Form -->
+    <div class="auth-section">
+      <h2>Get Started</h2>
+      
+      <!-- Email input -->
+      <input 
+        type="email" 
+        id="email" 
+        placeholder="Enter your email"
+        class="auth-input"
+      >
+      
+      <!-- Password input -->
+      <input 
+        type="password" 
+        id="password" 
+        placeholder="Enter your password"
+        class="auth-input"
+      >
+      
+      <!-- Buttons -->
+      <div class="button-group">
+        <button id="signup" class="auth-btn">Sign Up</button>
+        <button id="login" class="auth-btn">Log In</button>
+        <button id="logout" class="auth-btn" style="display:none;">Logout</button>
+      </div>
+      
+      <!-- Status message -->
+      <p id="status" class="status-text">Not logged in</p>
     </div>
   </div>
 
-  <!-- ⚙️ Connects your JavaScript logic to this page -->
-  <script type="module" src="/src/main.js"></script>
-  <!-- 🧠 "type='module'" allows the use of ES6 `import/export` features -->
+  <!-- 🔒 Login Modal (hidden by default) -->
+  <div id="login-modal" class="modal hidden">
+    <div class="modal-content">
+      <span id="close-modal" class="close-button">✖</span>
+      <h3>Please Log In</h3>
+      <p>You need to be logged in to access this page</p>
+      <button class="modal-login-btn">Go to Login</button>
+    </div>
+  </div>
 
+  <!-- 🔥 Firebase Scripts -->
+  <!-- These load Firebase from the internet (CDN) -->
+  <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js"></script>
+  
+  <!-- 📦 Our JavaScript files -->
+  <script src="src/js/auth.js"></script>
+  <script src="src/js/main.js"></script>
 </body>
 </html>
