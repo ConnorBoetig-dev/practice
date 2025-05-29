@@ -1,15 +1,16 @@
 // 📊 src/js/dashboard.js – Dashboard functionality
-// -------------------------------------------------
-// Key change: we no longer grab `currentUser` synchronously.
-// We wait for Firebase Auth to restore the session first.
+// This file handles file uploads and displays user's files
 
 document.addEventListener('DOMContentLoaded', () => {
   console.log('📊 Dashboard loading…');
 
+  // Backend API URL
+  const API_URL = 'http://localhost:4000/api';
+
   /* --------------------------------------------------
      1️⃣  Wait for Firebase to tell us who the user is.
      -------------------------------------------------- */
-  window.authFunctions.onAuthChange((currentUser) => {
+  window.authFunctions.onAuthChange(async (currentUser) => {
     if (!currentUser) {
       // Nobody signed in ➜ bounce to home
       alert('Please log in first!');
@@ -20,11 +21,6 @@ document.addEventListener('DOMContentLoaded', () => {
     /* --------------------------------------------------
        2️⃣  Once we have a user, build the dashboard UI.
        -------------------------------------------------- */
-
-    // 🔥 Firebase handles
-    const storage    = firebase.storage();
-    const storageRef = storage.ref();
-    const db         = firebase.firestore();
 
     // 📦 Page elements
     const userEmailElement = document.getElementById('user-email');
@@ -38,7 +34,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const filesGrid        = document.getElementById('files-grid');
     const logoutLink       = document.getElementById('logout-link');
 
-    // 🎯 Show the user’s e-mail in the corner
+    // 🎯 Show the user's email
     userEmailElement.textContent = `Logged in as: ${currentUser.email}`;
 
     // 📁 Keep track of the file the user picks
@@ -68,85 +64,87 @@ document.addEventListener('DOMContentLoaded', () => {
       if (!selectedFile) return;
 
       try {
-        // Disable button & show progress bar
         uploadBtn.disabled = true;
-        uploadBtn.textContent = 'Uploading…';
+        uploadBtn.textContent = 'Getting upload URL...';
         progressWrapper.style.display = 'block';
-        statusMessage.style.display  = 'none';
+        statusMessage.style.display = 'none';
 
-        // Unique file name (timestamp to avoid clashes)
-        const timestamp = Date.now();
-        const fileName  = `${timestamp}-${selectedFile.name}`;
-        const filePath  = `users/${currentUser.uid}/uploads/${fileName}`;
-
-        // Start the upload
-        const uploadTask = storageRef.child(filePath).put(selectedFile);
-
-        // Track progress
-        uploadTask.on(
-          'state_changed',
-          (snapshot) => {
-            const pct = (snapshot.bytesTransferred / snapshot.totalBytes) * 100;
-            progressFill.style.width = pct + '%';
-            progressText.textContent = Math.round(pct) + '%';
-            console.log('Upload progress:', pct.toFixed(2) + '%');
+        // Step 1: Get presigned URL from backend
+        const response = await fetch(`${API_URL}/files/upload`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
           },
-          (error) => {
-            console.error('Upload error:', error);
-            showStatus('Upload failed: ' + error.message, 'error');
-            resetUploadUI();
-          },
-          async () => {
-            console.log('Upload complete!');
+          body: JSON.stringify({
+            fileName: selectedFile.name,
+            fileType: selectedFile.type,
+            fileSize: selectedFile.size,
+            userId: currentUser.uid
+          })
+        });
 
-            // Get the download URL
-            const downloadURL = await uploadTask.snapshot.ref.getDownloadURL();
+        if (!response.ok) {
+          throw new Error('Failed to get upload URL');
+        }
 
-            // Save file metadata in Firestore
-            await saveFileMetadata({
-              name: selectedFile.name,
-              size: selectedFile.size,
-              type: selectedFile.type,
-              url:  downloadURL,
-              path: filePath,
-              uploadedAt: firebase.firestore.FieldValue.serverTimestamp(),
-              userId: currentUser.uid,
-            });
+        const { uploadUrl, s3Url } = await response.json();
 
-            showStatus('File uploaded successfully! 🎉', 'success');
-            resetUploadUI();
-            loadUserFiles();
+        // Step 2: Upload file directly to S3
+        uploadBtn.textContent = 'Uploading to S3...';
+        
+        // Simple progress simulation (since S3 PUT doesn't give us progress)
+        let progress = 0;
+        const progressInterval = setInterval(() => {
+          progress += 10;
+          if (progress <= 90) {
+            progressFill.style.width = progress + '%';
+            progressText.textContent = progress + '%';
           }
-        );
-      } catch (err) {
-        console.error(err);
-        showStatus('Unexpected error: ' + err.message, 'error');
+        }, 200);
+
+        const uploadResponse = await fetch(uploadUrl, {
+          method: 'PUT',
+          body: selectedFile,
+          headers: {
+            'Content-Type': selectedFile.type
+          }
+        });
+
+        clearInterval(progressInterval);
+        progressFill.style.width = '100%';
+        progressText.textContent = '100%';
+
+        if (!uploadResponse.ok) {
+          throw new Error('Failed to upload to S3');
+        }
+
+        // Success!
+        showStatus('File uploaded successfully! 🎉', 'success');
+        resetUploadUI();
+        loadUserFiles();
+
+      } catch (error) {
+        console.error('Upload error:', error);
+        showStatus('Upload failed: ' + error.message, 'error');
         resetUploadUI();
       }
     });
-
-    /* ---------- Firestore helpers ---------- */
-    async function saveFileMetadata(meta) {
-      try {
-        await db.collection('user_files').add(meta);
-        console.log('File metadata saved');
-      } catch (err) {
-        console.error('Error saving metadata:', err);
-      }
-    }
 
     /* ---------- File-list loader ---------- */
     async function loadUserFiles() {
       try {
         filesGrid.innerHTML = '<p class="loading-text">Loading your files…</p>';
 
-        const snap = await db
-          .collection('user_files')
-          .where('userId', '==', currentUser.uid)
-          .orderBy('uploadedAt', 'desc')
-          .get();
-
-        if (snap.empty) {
+        // Fetch from MongoDB via backend API
+        const response = await fetch(`${API_URL}/files/user/${currentUser.uid}`);
+        
+        if (!response.ok) {
+          throw new Error('Failed to fetch files');
+        }
+        
+        const { uploads } = await response.json();
+        
+        if (!uploads || uploads.length === 0) {
           filesGrid.innerHTML = `
             <div class="empty-state">
               <div class="empty-state-icon">📁</div>
@@ -156,11 +154,11 @@ document.addEventListener('DOMContentLoaded', () => {
           `;
           return;
         }
-
+        
         // Clear grid and render cards
         filesGrid.innerHTML = '';
-        snap.forEach((doc) => {
-          filesGrid.appendChild(createFileCard(doc.data()));
+        uploads.forEach((file) => {
+          filesGrid.appendChild(createFileCard(file));
         });
       } catch (err) {
         console.error('Error loading files:', err);
@@ -173,39 +171,39 @@ document.addEventListener('DOMContentLoaded', () => {
       const card = document.createElement('div');
       card.className = 'file-card';
 
-      const fileSize   = (file.size / 1024 / 1024).toFixed(2) + ' MB';
+      const fileSize = (file.fileSize / 1024 / 1024).toFixed(2) + ' MB';
       const uploadDate = file.uploadedAt
-        ? new Date(file.uploadedAt.toDate()).toLocaleDateString()
+        ? new Date(file.uploadedAt).toLocaleDateString()
         : 'Unknown date';
 
-      const isImage = file.type?.startsWith('image/');
-      const isVideo = file.type?.startsWith('video/');
+      const isImage = file.fileType?.startsWith('image/');
+      const isVideo = file.fileType?.startsWith('video/');
 
       card.innerHTML = `
         <div class="${isVideo ? 'video-preview' : ''}">
           ${
             isImage
-              ? `<img src="${file.url}" alt="${file.name}" class="file-preview">`
+              ? `<img src="${file.s3Url}" alt="${file.fileName}" class="file-preview">`
               : isVideo
-              ? `<video src="${file.url}" class="file-preview"></video>`
+              ? `<video src="${file.s3Url}" class="file-preview"></video>`
               : `<div class="file-preview" style="display:flex;align-items:center;justify-content:center;font-size:3rem;">📄</div>`
           }
         </div>
         <div class="file-info">
-          <div class="file-name"  title="${file.name}">${file.name}</div>
+          <div class="file-name" title="${file.fileName}">${file.fileName}</div>
           <div class="file-date">${uploadDate}</div>
           <div class="file-size">${fileSize}</div>
         </div>
       `;
 
-      card.addEventListener('click', () => window.open(file.url, '_blank'));
+      card.addEventListener('click', () => window.open(file.s3Url, '_blank'));
       return card;
     }
 
     /* ---------- Helper: status banner ---------- */
     function showStatus(msg, type = 'info') {
       statusMessage.textContent = msg;
-      statusMessage.className   = `status-message ${type}`;
+      statusMessage.className = `status-message ${type}`;
       statusMessage.style.display = 'block';
       setTimeout(() => (statusMessage.style.display = 'none'), 5000);
     }
@@ -215,8 +213,8 @@ document.addEventListener('DOMContentLoaded', () => {
       uploadBtn.disabled = false;
       uploadBtn.textContent = 'Upload to Cloud';
       progressWrapper.style.display = 'none';
-      progressFill.style.width  = '0%';
-      progressText.textContent  = '0%';
+      progressFill.style.width = '0%';
+      progressText.textContent = '0%';
       fileInput.value = '';
       fileNameDisplay.textContent = 'No file selected';
       selectedFile = null;
@@ -227,7 +225,7 @@ document.addEventListener('DOMContentLoaded', () => {
       e.preventDefault();
       try {
         await window.authFunctions.logout();
-        // onAuthChange will catch the redirect
+        window.location.href = '../../index.html';
       } catch (err) {
         console.error('Logout error:', err);
         alert('Error logging out: ' + err.message);
