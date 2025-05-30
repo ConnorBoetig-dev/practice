@@ -3,29 +3,18 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>ConLearn Dashboard</title>
-  
-  <!-- 🎨 CSS Files -->
-  <link rel="stylesheet" href="../css/style.css">
+  <title>ConLearn - Dashboard</title>
   <link rel="stylesheet" href="../css/dashboard.css">
 </head>
 <body>
-  <!-- 🧭 Navigation Bar -->
-  <nav class="navbar">
-    <div class="logo">ConLearn Dashboard</div>
-    <ul class="nav-links">
-      <li><a href="../../index.html">Home</a></li>
-      <li><a href="#" id="profile-link">Profile</a></li>
-      <li><a href="#" id="logout-link">Logout</a></li>
-    </ul>
-  </nav>
-
-  <!-- 📊 Dashboard Container -->
   <div class="dashboard-container">
-    <!-- Welcome Section -->
+    <!-- 👋 Welcome Section -->
     <div class="welcome-section">
-      <h1>Welcome to Your Dashboard! 🎯</h1>
-      <p id="user-email" class="user-info">Loading...</p>
+      <h1>Welcome to ConLearn</h1>
+      <div class="user-info">
+        <span id="user-email">Loading...</span>
+        <a href="#" id="logout-link" class="logout-link">Logout</a>
+      </div>
     </div>
 
     <!-- 📤 Upload Section -->

@@ -11,13 +11,26 @@ import dotenv from 'dotenv';
 // Load environment variables from .env file
 dotenv.config();
 
+// AWS Configuration
+const AWS_CONFIG = {
+  bucketName: process.env.AWS_BUCKET_NAME,
+  region: process.env.AWS_REGION
+};
+
+// Validate required environment variables
+if (!AWS_CONFIG.bucketName || !AWS_CONFIG.region) {
+  console.error('❌ Missing required AWS environment variables');
+  console.error('Please ensure AWS_BUCKET_NAME and AWS_REGION are set in .env');
+  process.exit(1);
+}
+
 /**
  * 🏗️ Create S3 Client
  * This is like creating a "phone line" to talk to AWS S3
  * It needs your AWS credentials to know who you are
  */
 const s3Client = new S3Client({
-  region: process.env.AWS_REGION || 'us-east-1', // Which AWS data center to use
+  region: AWS_CONFIG.region,
   credentials: {
     accessKeyId: process.env.AWS_ACCESS_KEY_ID,     // Your AWS username
     secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY  // Your AWS password
@@ -44,9 +57,9 @@ export async function generatePresignedUploadUrl(fileName, fileType, userId) {
     // 📦 Create the S3 upload command
     // This tells S3 what we want to do (PUT = upload a file)
     const command = new PutObjectCommand({
-      Bucket: process.env.AWS_BUCKET_NAME,  // Which S3 bucket to use
-      Key: s3Key,                           // Where to store the file
-      ContentType: fileType                 // What type of file it is
+      Bucket: AWS_CONFIG.bucketName,  // Which S3 bucket to use
+      Key: s3Key,                     // Where to store the file
+      ContentType: fileType           // What type of file it is
     });
     
     // ⏰ Generate the pre-signed URL
@@ -58,12 +71,14 @@ export async function generatePresignedUploadUrl(fileName, fileType, userId) {
     console.log('✅ Pre-signed URL generated:', {
       fileName,
       s3Key,
+      bucketName: AWS_CONFIG.bucketName,
+      region: AWS_CONFIG.region,
       expiresIn: '5 minutes'
     });
     
     return {
       uploadUrl,  // The temporary upload link
-      fileKey: s3Key  // Where the file will be stored
+      key: s3Key  // Where the file will be stored
     };
     
   } catch (error) {
@@ -82,7 +97,7 @@ export async function generatePresignedUploadUrl(fileName, fileType, userId) {
 export async function deleteS3Object(fileKey) {
   try {
     const command = new DeleteObjectCommand({
-      Bucket: process.env.AWS_BUCKET_NAME,
+      Bucket: AWS_CONFIG.bucketName,
       Key: fileKey
     });
     

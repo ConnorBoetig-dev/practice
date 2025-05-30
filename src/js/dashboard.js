@@ -84,10 +84,12 @@ document.addEventListener('DOMContentLoaded', () => {
         });
 
         if (!presignResponse.ok) {
-          throw new Error('Failed to get upload URL');
+          const errorData = await presignResponse.json();
+          throw new Error(errorData.error || 'Failed to get upload URL');
         }
 
-        const { uploadUrl, s3Url } = await presignResponse.json();
+        const { uploadUrl, key } = await presignResponse.json();
+        console.log('Got presigned URL:', { uploadUrl, key });
 
         // Step 2: Upload file directly to S3
         uploadBtn.textContent = 'Uploading to S3...';
@@ -104,10 +106,11 @@ document.addEventListener('DOMContentLoaded', () => {
 
         const uploadResponse = await fetch(uploadUrl, {
           method: 'PUT',
-          body: selectedFile,
+          mode: 'cors',
           headers: {
             'Content-Type': selectedFile.type
-          }
+          },
+          body: selectedFile
         });
 
         clearInterval(progressInterval);
@@ -118,6 +121,8 @@ document.addEventListener('DOMContentLoaded', () => {
           throw new Error('Failed to upload to S3');
         }
 
+        console.log('File uploaded to S3 successfully');
+
         // Step 3: Record metadata in our database
         uploadBtn.textContent = 'Saving metadata...';
         
@@ -127,16 +132,17 @@ document.addEventListener('DOMContentLoaded', () => {
             'Content-Type': 'application/json',
           },
           body: JSON.stringify({
-            userId: currentUser.uid,
+            key,
             fileName: selectedFile.name,
             fileType: selectedFile.type,
             fileSize: selectedFile.size,
-            s3Url
+            userId: currentUser.uid
           })
         });
 
         if (!completeResponse.ok) {
-          throw new Error('Failed to save file metadata');
+          const errorData = await completeResponse.json();
+          throw new Error(errorData.error || 'Failed to save file metadata');
         }
 
         // Success!
@@ -160,7 +166,8 @@ document.addEventListener('DOMContentLoaded', () => {
         const response = await fetch(`${API_URL}/files/user/${currentUser.uid}`);
         
         if (!response.ok) {
-          throw new Error('Failed to fetch files');
+          const errorData = await response.json();
+          throw new Error(errorData.error || 'Failed to fetch files');
         }
         
         const { uploads } = await response.json();
@@ -200,13 +207,16 @@ document.addEventListener('DOMContentLoaded', () => {
       const isImage = file.fileType?.startsWith('image/');
       const isVideo = file.fileType?.startsWith('video/');
 
+      // Construct S3 URL using the key
+      const s3Url = `https://learnin45-70.s3.us-east-1.amazonaws.com/${file.key}`;
+
       card.innerHTML = `
         <div class="${isVideo ? 'video-preview' : ''}">
           ${
             isImage
-              ? `<img src="${file.s3Url}" alt="${file.fileName}" class="file-preview">`
+              ? `<img src="${s3Url}" alt="${file.fileName}" class="file-preview">`
               : isVideo
-              ? `<video src="${file.s3Url}" class="file-preview"></video>`
+              ? `<video src="${s3Url}" class="file-preview"></video>`
               : `<div class="file-preview" style="display:flex;align-items:center;justify-content:center;font-size:3rem;">📄</div>`
           }
         </div>
@@ -217,7 +227,7 @@ document.addEventListener('DOMContentLoaded', () => {
         </div>
       `;
 
-      card.addEventListener('click', () => window.open(file.s3Url, '_blank'));
+      card.addEventListener('click', () => window.open(s3Url, '_blank'));
       return card;
     }
 

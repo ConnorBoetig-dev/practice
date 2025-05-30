@@ -2,6 +2,10 @@
 import express from 'express';
 import { generatePresignedUploadUrl } from '../utils/s3Client.js';
 import { Upload } from '../models/Upload.js';
+import dotenv from 'dotenv';
+
+// Load environment variables
+dotenv.config();
 
 const router = express.Router();
 
@@ -28,19 +32,15 @@ router.post('/presign', async (req, res) => {
     }
     
     // Generate presigned URL for S3 upload
-    const { uploadUrl, fileKey } = await generatePresignedUploadUrl(
+    const { uploadUrl, key } = await generatePresignedUploadUrl(
       fileName,
       fileType,
       userId
     );
     
-    // S3 URL where file will be accessible after upload
-    const s3Url = `https://${process.env.AWS_BUCKET_NAME}.s3.${process.env.AWS_REGION}.amazonaws.com/${fileKey}`;
-    
     res.json({
       uploadUrl,
-      fileKey,
-      s3Url
+      key
     });
   } catch (error) {
     console.error('Presign error:', error);
@@ -54,14 +54,17 @@ router.post('/presign', async (req, res) => {
  */
 router.post('/complete', async (req, res) => {
   try {
-    const { userId, fileName, fileType, fileSize, s3Url } = req.body;
+    const { userId, fileName, fileType, fileSize, key } = req.body;
     
     // Validate required fields
-    if (!userId || !fileName || !fileType || !s3Url) {
+    if (!userId || !fileName || !fileType || !key) {
       return res.status(400).json({
-        error: 'Missing required fields: userId, fileName, fileType, s3Url'
+        error: 'Missing required fields: userId, fileName, fileType, key'
       });
     }
+
+    // Construct S3 URL
+    const s3Url = `https://${process.env.AWS_BUCKET_NAME}.s3.${process.env.AWS_REGION}.amazonaws.com/${key}`;
 
     // Create and save upload record
     const upload = new Upload({
@@ -69,7 +72,8 @@ router.post('/complete', async (req, res) => {
       fileName,
       fileSize,
       fileType,
-      s3Url
+      s3Url,
+      key
     });
     
     await upload.save();
