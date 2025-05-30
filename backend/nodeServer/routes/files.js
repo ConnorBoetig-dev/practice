@@ -6,17 +6,24 @@ import { Upload } from '../models/Upload.js';
 const router = express.Router();
 
 /**
- * POST /api/files/upload
- * Generates presigned URL and saves file metadata
+ * POST /api/files/presign
+ * Generates presigned URL for S3 upload
  */
-router.post('/upload', async (req, res) => {
+router.post('/presign', async (req, res) => {
   try {
-    const { fileName, fileType, userId } = req.body;
+    const { fileName, fileType, userId, fileSize } = req.body;
     
     // Validate required fields
     if (!fileName || !fileType || !userId) {
       return res.status(400).json({ 
         error: 'Missing required fields: fileName, fileType, userId' 
+      });
+    }
+
+    // Validate fileSize if provided
+    if (fileSize !== undefined && (typeof fileSize !== 'number' || fileSize <= 0)) {
+      return res.status(400).json({
+        error: 'fileSize must be a positive number'
       });
     }
     
@@ -30,11 +37,37 @@ router.post('/upload', async (req, res) => {
     // S3 URL where file will be accessible after upload
     const s3Url = `https://${process.env.AWS_BUCKET_NAME}.s3.${process.env.AWS_REGION}.amazonaws.com/${fileKey}`;
     
-    // Save metadata to MongoDB
+    res.json({
+      uploadUrl,
+      fileKey,
+      s3Url
+    });
+  } catch (error) {
+    console.error('Presign error:', error);
+    res.status(500).json({ error: 'Failed to generate upload URL' });
+  }
+});
+
+/**
+ * POST /api/files/complete
+ * Records file metadata after successful upload
+ */
+router.post('/complete', async (req, res) => {
+  try {
+    const { userId, fileName, fileType, fileSize, s3Url } = req.body;
+    
+    // Validate required fields
+    if (!userId || !fileName || !fileType || !s3Url) {
+      return res.status(400).json({
+        error: 'Missing required fields: userId, fileName, fileType, s3Url'
+      });
+    }
+
+    // Create and save upload record
     const upload = new Upload({
       userId,
       fileName,
-      fileSize: req.body.fileSize || 0,
+      fileSize,
       fileType,
       s3Url
     });
@@ -42,14 +75,12 @@ router.post('/upload', async (req, res) => {
     await upload.save();
     
     res.json({
-      uploadUrl,
-      fileKey,
-      s3Url,
-      uploadId: upload._id
+      uploadId: upload._id,
+      s3Url
     });
   } catch (error) {
-    console.error('Upload error:', error);
-    res.status(500).json({ error: 'Failed to generate upload URL' });
+    console.error('Upload completion error:', error);
+    res.status(500).json({ error: 'Failed to record upload metadata' });
   }
 });
 
@@ -61,8 +92,11 @@ router.get('/user/:userId', async (req, res) => {
   try {
     const { userId } = req.params;
     
-    // Find all uploads for this user, sorted by newest first
-    const uploads = await Upload.find({ userId })
+    // Find all non-deleted uploads for this user, sorted by newest first
+    const uploads = await Upload.find({ 
+      userId,
+      deletedAt: null 
+    })
       .sort({ uploadedAt: -1 })
       .limit(50);
     

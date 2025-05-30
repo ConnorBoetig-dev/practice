@@ -70,7 +70,7 @@ document.addEventListener('DOMContentLoaded', () => {
         statusMessage.style.display = 'none';
 
         // Step 1: Get presigned URL from backend
-        const response = await fetch(`${API_URL}/files/upload`, {
+        const presignResponse = await fetch(`${API_URL}/files/presign`, {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
@@ -83,11 +83,11 @@ document.addEventListener('DOMContentLoaded', () => {
           })
         });
 
-        if (!response.ok) {
+        if (!presignResponse.ok) {
           throw new Error('Failed to get upload URL');
         }
 
-        const { uploadUrl, s3Url } = await response.json();
+        const { uploadUrl, s3Url } = await presignResponse.json();
 
         // Step 2: Upload file directly to S3
         uploadBtn.textContent = 'Uploading to S3...';
@@ -116,6 +116,27 @@ document.addEventListener('DOMContentLoaded', () => {
 
         if (!uploadResponse.ok) {
           throw new Error('Failed to upload to S3');
+        }
+
+        // Step 3: Record metadata in our database
+        uploadBtn.textContent = 'Saving metadata...';
+        
+        const completeResponse = await fetch(`${API_URL}/files/complete`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            userId: currentUser.uid,
+            fileName: selectedFile.name,
+            fileType: selectedFile.type,
+            fileSize: selectedFile.size,
+            s3Url
+          })
+        });
+
+        if (!completeResponse.ok) {
+          throw new Error('Failed to save file metadata');
         }
 
         // Success!
