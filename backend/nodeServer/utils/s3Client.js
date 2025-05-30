@@ -1,10 +1,10 @@
 // backend/nodeServer/utils/s3Client.js
 // 🔧 This file handles all S3 operations for ConLearn
-// It creates pre-signed URLs that let users upload files safely
+// It creates pre-signed URLs that let users upload and view files safely
 
 import { S3Client } from '@aws-sdk/client-s3';
 import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
-import { PutObjectCommand } from '@aws-sdk/client-s3';
+import { PutObjectCommand, GetObjectCommand, DeleteObjectCommand } from '@aws-sdk/client-s3';
 import { v4 as uuidv4 } from 'uuid';
 import dotenv from 'dotenv';
 
@@ -68,7 +68,7 @@ export async function generatePresignedUploadUrl(fileName, fileType, userId) {
       expiresIn: 300 // URL expires in 5 minutes
     });
     
-    console.log('✅ Pre-signed URL generated:', {
+    console.log('✅ Pre-signed upload URL generated:', {
       fileName,
       s3Key,
       bucketName: AWS_CONFIG.bucketName,
@@ -82,8 +82,40 @@ export async function generatePresignedUploadUrl(fileName, fileType, userId) {
     };
     
   } catch (error) {
-    console.error('❌ Error generating pre-signed URL:', error);
+    console.error('❌ Error generating pre-signed upload URL:', error);
     throw new Error('Failed to generate upload URL');
+  }
+}
+
+/**
+ * 👁️ Generate Pre-signed GET URL
+ * This creates a temporary link for viewing/downloading files
+ * 
+ * @param {string} fileKey - The S3 key (path) of the file
+ * @returns {string} - Temporary URL for viewing the file
+ */
+export async function generatePresignedGetUrl(fileKey) {
+  try {
+    // 📥 Create the S3 GET command
+    // This tells S3 we want to retrieve a file
+    const command = new GetObjectCommand({
+      Bucket: AWS_CONFIG.bucketName,
+      Key: fileKey
+    });
+    
+    // ⏰ Generate pre-signed URL for viewing
+    // This URL will work for 1 hour (3600 seconds)
+    const viewUrl = await getSignedUrl(s3Client, command, {
+      expiresIn: 3600 // URL expires in 1 hour
+    });
+    
+    console.log('✅ Pre-signed GET URL generated for:', fileKey);
+    
+    return viewUrl;
+    
+  } catch (error) {
+    console.error('❌ Error generating pre-signed GET URL:', error);
+    throw new Error('Failed to generate view URL');
   }
 }
 
@@ -109,6 +141,3 @@ export async function deleteS3Object(fileKey) {
     throw new Error('Failed to delete file');
   }
 }
-
-// Don't forget to import this at the top!
-import { DeleteObjectCommand } from '@aws-sdk/client-s3';

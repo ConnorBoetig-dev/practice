@@ -1,4 +1,4 @@
-// 📊 src/js/dashboard.js – Dashboard functionality
+// 📊 src/js/dashboard.js – Dashboard functionality (FIXED VERSION)
 // This file handles file uploads and displays user's files
 
 document.addEventListener('DOMContentLoaded', () => {
@@ -194,12 +194,15 @@ document.addEventListener('DOMContentLoaded', () => {
       }
     }
 
-    /* ---------- File-card factory ---------- */
+    /* ---------- File-card factory (PROPERLY FIXED!) ---------- */
     function createFileCard(file) {
       const card = document.createElement('div');
       card.className = 'file-card';
 
-      const fileSize = (file.fileSize / 1024 / 1024).toFixed(2) + ' MB';
+      const fileSize = file.fileSize ? 
+        (file.fileSize / 1024 / 1024).toFixed(2) + ' MB' : 
+        'Unknown size';
+        
       const uploadDate = file.uploadedAt
         ? new Date(file.uploadedAt).toLocaleDateString()
         : 'Unknown date';
@@ -207,27 +210,92 @@ document.addEventListener('DOMContentLoaded', () => {
       const isImage = file.fileType?.startsWith('image/');
       const isVideo = file.fileType?.startsWith('video/');
 
-      // Construct S3 URL using the key
-      const s3Url = `https://learnin45-70.s3.us-east-1.amazonaws.com/${file.key}`;
+      // Use the s3Url from database
+      const fileUrl = file.s3Url;
+      
+      console.log('🖼️ Creating file card:', {
+        fileName: file.fileName,
+        fileUrl: fileUrl,
+        fileType: file.fileType,
+        isImage,
+        isVideo
+      });
 
+      // Create the HTML structure
       card.innerHTML = `
-        <div class="${isVideo ? 'video-preview' : ''}">
+        <div class="file-preview-container">
           ${
             isImage
-              ? `<img src="${s3Url}" alt="${file.fileName}" class="file-preview">`
+              ? `<img 
+                   src="${fileUrl}" 
+                   alt="${file.fileName}" 
+                   class="file-preview"
+                   style="display: block;"
+                 >
+                 <div class="error-placeholder" style="display: none;">
+                   <div>🖼️</div>
+                   <div>Preview Error</div>
+                 </div>`
               : isVideo
-              ? `<video src="${s3Url}" class="file-preview"></video>`
-              : `<div class="file-preview" style="display:flex;align-items:center;justify-content:center;font-size:3rem;">📄</div>`
+              ? `<video 
+                   src="${fileUrl}" 
+                   class="file-preview"
+                   style="display: block;"
+                 ></video>
+                 <div class="error-placeholder" style="display: none;">
+                   <div>🎥</div>
+                   <div>Preview Error</div>
+                 </div>`
+              : `<div class="file-preview generic-file">
+                   <div style="font-size:3rem;">📄</div>
+                   <div>File</div>
+                 </div>`
           }
         </div>
         <div class="file-info">
           <div class="file-name" title="${file.fileName}">${file.fileName}</div>
           <div class="file-date">${uploadDate}</div>
           <div class="file-size">${fileSize}</div>
+          <button class="view-file-btn">View File</button>
         </div>
       `;
 
-      card.addEventListener('click', () => window.open(s3Url, '_blank'));
+      // Add event listeners after the HTML is created
+      const previewImage = card.querySelector('img');
+      const previewVideo = card.querySelector('video');
+      const errorPlaceholder = card.querySelector('.error-placeholder');
+      const viewButton = card.querySelector('.view-file-btn');
+
+      // Handle image/video load errors
+      if (previewImage && errorPlaceholder) {
+        previewImage.onload = () => {
+          console.log('✅ Image loaded successfully:', file.fileName);
+        };
+        previewImage.onerror = () => {
+          console.log('❌ Image failed to load:', file.fileName);
+          previewImage.style.display = 'none';
+          errorPlaceholder.style.display = 'flex';
+        };
+      }
+
+      if (previewVideo && errorPlaceholder) {
+        previewVideo.onloadeddata = () => {
+          console.log('✅ Video loaded successfully:', file.fileName);
+        };
+        previewVideo.onerror = () => {
+          console.log('❌ Video failed to load:', file.fileName);
+          previewVideo.style.display = 'none';
+          errorPlaceholder.style.display = 'flex';
+        };
+      }
+
+      // Handle view button click
+      viewButton.addEventListener('click', (e) => {
+        e.stopPropagation();
+        console.log('🔗 Opening file:', fileUrl);
+        window.open(fileUrl, '_blank');
+      });
+
       return card;
     }
 

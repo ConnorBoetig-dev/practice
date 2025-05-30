@@ -16,7 +16,26 @@
 .user-info {
   font-size: 1.2rem;
   color: #00ff00;
-  margin-top: 0.5rem;
+  margin: 1rem 0;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 2rem;
+}
+
+.logout-link {
+  color: #ff4444;
+  text-decoration: none;
+  font-weight: bold;
+  padding: 0.5rem 1rem;
+  border: 1px solid #ff4444;
+  border-radius: 5px;
+  transition: all 0.3s ease;
+}
+
+.logout-link:hover {
+  background-color: #ff4444;
+  color: #000;
 }
 
 /* 📤 Upload Card */
@@ -71,11 +90,21 @@
   padding: 14px 30px;
   margin-top: 1rem;
   font-weight: bold;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.3s ease;
 }
 
 .upload-btn:hover:not(:disabled) {
   background-color: #00ff00;
   box-shadow: 0 5px 20px rgba(0, 255, 0, 0.5);
+}
+
+.upload-btn:disabled {
+  background-color: #555;
+  cursor: not-allowed;
+  opacity: 0.6;
 }
 
 /* 📊 Progress Bar */
@@ -145,12 +174,12 @@
 
 .files-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
   gap: 1.5rem;
   margin-top: 1.5rem;
 }
 
-/* 🖼️ File Card */
+/* 🖼️ File Card - IMPROVED VERSION! */
 .file-card {
   background-color: #1a1a1a;
   border: 1px solid #333;
@@ -158,6 +187,7 @@
   overflow: hidden;
   transition: all 0.3s ease;
   cursor: pointer;
+  position: relative;
 }
 
 .file-card:hover {
@@ -166,42 +196,59 @@
   box-shadow: 0 10px 20px rgba(0, 255, 0, 0.2);
 }
 
-.file-preview {
-  width: 100%;
-  height: 150px;
-  object-fit: cover;
-  background-color: #000;
-}
-
-.file-info {
-  padding: 1rem;
-}
-
-.file-name {
-  color: #fff;
-  font-size: 0.9rem;
-  margin-bottom: 0.5rem;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-
-.file-date {
-  color: #888;
-  font-size: 0.8rem;
-}
-
-.file-size {
-  color: #00ff00;
-  font-size: 0.8rem;
-  margin-top: 0.3rem;
-}
-
-/* 🎬 Video Preview */
+/* Preview Container */
+.file-preview-container,
 .video-preview {
   position: relative;
+  width: 100%;
+  height: 180px;
+  overflow: hidden;
+  background-color: #000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
+.file-preview {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+/* Error placeholder for broken images/videos */
+.error-placeholder {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: #2a2a2a;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  color: #888;
+  font-size: 0.9rem;
+}
+
+.error-placeholder > div:first-child {
+  font-size: 2rem;
+  margin-bottom: 0.5rem;
+}
+
+/* Generic file preview */
+.generic-file {
+  background-color: #2a2a2a;
+  color: #888;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.9rem;
+}
+
+/* Video play button overlay */
 .video-preview::after {
   content: "▶";
   position: absolute;
@@ -217,6 +264,52 @@
   display: flex;
   align-items: center;
   justify-content: center;
+  pointer-events: none;
+}
+
+/* File Info Section */
+.file-info {
+  padding: 1rem;
+}
+
+.file-name {
+  color: #fff;
+  font-size: 0.9rem;
+  margin-bottom: 0.5rem;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  font-weight: bold;
+}
+
+.file-date {
+  color: #888;
+  font-size: 0.8rem;
+  margin-bottom: 0.3rem;
+}
+
+.file-size {
+  color: #00ff00;
+  font-size: 0.8rem;
+  margin-bottom: 1rem;
+}
+
+/* View File Button */
+.view-file-btn {
+  width: 100%;
+  padding: 0.5rem 1rem;
+  background-color: #0066ff;
+  color: white;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+  font-size: 0.9rem;
+  transition: all 0.3s ease;
+}
+
+.view-file-btn:hover {
+  background-color: #0088ff;
+  transform: translateY(-1px);
 }
 
 /* 📱 Loading State */
@@ -224,6 +317,14 @@
   text-align: center;
   color: #888;
   font-style: italic;
+  grid-column: 1 / -1;
+}
+
+.error-text {
+  text-align: center;
+  color: #ff4444;
+  font-style: italic;
+  grid-column: 1 / -1;
 }
 
 /* 🚫 Empty State */
@@ -231,6 +332,7 @@
   text-align: center;
   padding: 3rem;
   color: #888;
+  grid-column: 1 / -1;
 }
 
 .empty-state-icon {
@@ -239,18 +341,24 @@
   opacity: 0.5;
 }
 
-/* 📱 Responsive */
+/* 📱 Responsive Design */
 @media (max-width: 768px) {
   .dashboard-container {
     padding: 1rem;
   }
   
   .files-grid {
-    grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
     gap: 1rem;
   }
   
-  .file-preview {
-    height: 120px;
+  .file-preview-container,
+  .video-preview {
+    height: 150px;
+  }
+  
+  .user-info {
+    flex-direction: column;
+    gap: 1rem;
   }
 }
